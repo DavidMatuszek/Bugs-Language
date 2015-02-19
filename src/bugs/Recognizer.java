@@ -55,19 +55,17 @@ public class Recognizer {
     }
 
     /**
-     * Tries to recognize an &lt;expression&gt;.
+     * Tries to build an &lt;expression&gt; on the global stack.
      * <pre>&lt;expression&gt; ::= &lt;term&gt; { &lt;add_operator&gt; &lt;expression&gt; }</pre>
      * A <code>SyntaxException</code> will be thrown if the add_operator
      * is present but not followed by a valid &lt;expression&gt;.
      * @return <code>true</code> if an expression is recognized.
      */
     public boolean isArithmeticExpression() {
-        boolean startsWithUnary = symbol("+") || symbol("-"); // will be used later
-        if (!isTerm()) return false;
+        if (!isTerm())
+            return false;
         while (isAddOperator()) {
-            if (!isArithmeticExpression()) {
-                error("Error in arithmetic expression after '+' or '-'");
-            }
+            if (!isTerm()) error("Error in expression after '+' or '-'");
         }
         return true;
     }
@@ -89,6 +87,22 @@ public class Recognizer {
 
     /**
      * Tries to recognize a &lt;factor&gt;.
+     * <pre>&lt;factor&gt; ::= [ &lt;add operator&gt; ] &lt;unsigned factor&gt;</pre>
+     * @return <code>true</code> if a factor is parsed.
+     */
+    public boolean isFactor() {
+        if(symbol("+") || symbol("-")) {
+            if (isUnsignedFactor()) {
+                return true;
+            }
+            error("No factor following unary plus or minus");
+            return false; // Can't ever get here
+        }
+        return isUnsignedFactor();
+    }
+
+    /**
+     * Tries to recognize an &lt;unsigned factor&gt;.
      * <pre>&lt;factor&gt; ::= &lt;name&gt; "." &lt;name&gt;
      *           | &lt;name&gt; "(" &lt;parameter list&gt; ")"
      *           | &lt;name&gt;
@@ -99,7 +113,7 @@ public class Recognizer {
      * &lt;expression&gt; and a closing parenthesis.
      * @return <code>true</code> if a factor is recognized.
      */
-    public boolean isFactor() {
+    public boolean isUnsignedFactor() {
         if (isVariable()) {
             if (symbol(".")) {              // reference to another Bug
                 if (name()) return true;
