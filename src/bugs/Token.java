@@ -3,6 +3,7 @@ package bugs;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Tokens specific to the Bugs language.
@@ -10,7 +11,10 @@ import java.util.Set;
  * @version February 2015
  */
 public class Token {
-    static enum Type { KEYWORD, NAME, NUMBER, SYMBOL, ERROR, EOL, EOF };
+    static enum Type { KEYWORD, NAME, NUMBER, SYMBOL, ERROR, EOL, EOF }
+    private static final Pattern NAME_REGEX = Pattern.compile("[a-zA-Z_]\\w*");
+    private static final Pattern NUMBER_REGEX = Pattern.compile("(\\d+\\.\\d*)|(\\.?\\d+)");
+    private static final Pattern SYMBOL_REGEX = Pattern.compile("[^\\w]+");
 
     private static final String[] KEYWORD_LIST = new String[] {
         "Allbugs", "Bug", "move", "moveto", "turn", "turnto", "line",
@@ -19,16 +23,24 @@ public class Token {
         "black", "blue", "cyan", "darkGray", "gray", "green", "lightGray",
         "magenta", "orange", "pink", "red", "white", "yellow", "brown",
         "purple", "none" };
-    
+
+    private static final String[] PSEUDO_KEYWORD_LIST = new String[] {
+        "assign", "block", "call", "function", "list"
+    };
+
     private static final String[] COLOR_LIST = new String[] {
         "black", "blue", "cyan", "darkGray", "gray", "green", "lightGray",
         "magenta", "orange", "pink", "red", "white", "yellow", "brown",
         "purple", "none" };
-        
+
     /** The set of strings that are considered to be keywords. */
     public static final Set<String> KEYWORDS =
         new HashSet<>(Arrays.asList(KEYWORD_LIST));
-        
+
+    /** The set of strings that are considered to be pseudo keywords. */
+    public static final Set<String> PSEUDO_KEYWORDS =
+            new HashSet<>(Arrays.asList(PSEUDO_KEYWORD_LIST));
+
     /** The set of strings that are considered to be color names. */
     public static final Set<String> COLORS =
         new HashSet<>(Arrays.asList(COLOR_LIST));
@@ -47,6 +59,36 @@ public class Token {
     public Token(Type type, String value) {
         this.type = type;
         this.value = value;
+    }
+
+    /**
+     * Constructor for Tokens.
+     * 
+     * @param value The characters making up the token. The type is
+     * determined from the token.
+     */
+    public Token(String value) {
+        this.type = typeOf(value);
+        this.value = value;
+    }
+
+    /**
+     * Determine the token type of the given string. A null string
+     * is considered to represent the end of file.
+     * @param s The string to classify.
+     * @return The type of the string.
+     */
+    public static Token.Type typeOf(String s) {
+        if (s == null) return Token.Type.EOF;
+        if (s.equals("\n")) return Token.Type.EOL;
+        if (SYMBOL_REGEX.matcher(s).matches()) return Token.Type.SYMBOL;
+        if (NUMBER_REGEX.matcher(s).matches()) return Token.Type.NUMBER;
+        if (NAME_REGEX.matcher(s).matches()) {
+            if (Token.KEYWORDS.contains(s)) return Token.Type.KEYWORD;
+            if (Token.PSEUDO_KEYWORDS.contains(s)) return Token.Type.KEYWORD;
+            return Token.Type.NAME;
+        }
+        return Token.Type.ERROR;
     }
 
     /**
