@@ -23,7 +23,9 @@ import java.io.StringReader;
  * @version February 2015
  */
 public class Recognizer {
+    /** The tokenizer used by this Parser. */
     StreamTokenizer tokenizer = null;
+    /** The number of the line of source code currently being processed. */
     int lineNumber;
     
     /**
@@ -55,8 +57,8 @@ public class Recognizer {
     }
 
     /**
-     * Tries to build an &lt;expression&gt; on the global stack.
-     * <pre>&lt;expression&gt; ::= &lt;term&gt; { &lt;add_operator&gt; &lt;expression&gt; }</pre>
+     * Tries to recognize an &lt;arithmetic expression&gt;.
+     * <pre>&lt;arithmetic expression&gt; ::= [ &lt;add_operator&gt; ] &lt;term&gt; { &lt;add_operator&gt; &lt;term&gt; }</pre>
      * A <code>SyntaxException</code> will be thrown if the add_operator
      * is present but not followed by a valid &lt;expression&gt;.
      * @return <code>true</code> if an expression is recognized.
@@ -80,7 +82,7 @@ public class Recognizer {
     public boolean isTerm() {
         if (!isFactor()) return false;
         while (isMultiplyOperator()) {
-            if (!isTerm()) error("No term after '*' or '/'");
+            if (!isFactor()) error("No term after '*' or '/'");
         }
         return true;
     }
@@ -177,12 +179,12 @@ public class Recognizer {
 //----- Private "helper" methods
 
     /**
-   * Tests whether the next token is a number. If it is, the token
-   * is consumed, otherwise it is not.
-   *
-   * @return <code>true</code> if the next token is a number.
-   */
-      private boolean number() {
+     * Tests whether the next token is a number. If it is, the token
+     * is consumed, otherwise it is not.
+     *
+     * @return <code>true</code> if the next token is a number.
+     */
+    private boolean number() {
         return nextTokenMatches(Token.Type.NUMBER);
     }
 
@@ -280,6 +282,7 @@ public class Recognizer {
             case StreamTokenizer.TT_NUMBER:
                 return new Token(Token.Type.NUMBER, tokenizer.nval + "");
             case StreamTokenizer.TT_EOL:
+                lineNumber++;
                 return new Token(Token.Type.EOL, "\n");
             case StreamTokenizer.TT_EOF:
                 return new Token(Token.Type.EOF, "EOF");
@@ -292,7 +295,8 @@ public class Recognizer {
      * Returns the most recent Token to the tokenizer.
      */
     void pushBack() {
-        tokenizer.pushBack();
+        tokenizer.pushBack();  
+        if (tokenizer.ttype == tokenizer.TT_EOL) lineNumber--;
     }
 
     /**
