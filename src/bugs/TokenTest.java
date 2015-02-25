@@ -44,8 +44,23 @@ public class TokenTest {
     @Test
     public final void testToken_String() {
         Token t = new Token("loop");
-        assertEquals( Token.Type.KEYWORD, t.type);
+        assertEquals(Token.Type.KEYWORD, t.type);
         assertEquals("loop", t.value);
+        Token t2 = new Token("call");
+        assertEquals(Token.Type.KEYWORD, t2.type);
+    }
+
+    /**
+     * Test method for {@link bugs.Token#Token(java.lang.String)}.
+     */
+    @Test
+    public final void testToken_NumericString() {
+        Token t = new Token("5");
+        assertEquals(Token.Type.NUMBER, t.type);
+        assertEquals("5", t.value);
+        t = new Token("5.0");
+        assertEquals(Token.Type.NUMBER, t.type);
+        assertEquals("5.0", t.value);
     }
 
     /**
@@ -65,6 +80,7 @@ public class TokenTest {
         assertEquals(Token.Type.KEYWORD, Token.typeOf("move"));
         assertEquals(Token.Type.KEYWORD, Token.typeOf("red"));
         assertEquals(Token.Type.KEYWORD, Token.typeOf("list"));
+        assertEquals(Token.Type.KEYWORD, Token.typeOf("call"));
 
         assertEquals(Token.Type.SYMBOL, Token.typeOf("*"));
         assertEquals(Token.Type.SYMBOL, Token.typeOf("?"));
